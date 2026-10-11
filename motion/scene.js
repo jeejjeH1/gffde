@@ -285,11 +285,6 @@ function post(t, glitch, flash, flashColor) {
 function drawHUD(t, idx, total, a) {
   if (a <= 0) return;
   ctx.save(); ctx.globalAlpha = a;
-  const m = 44, L = 34;
-  ctx.strokeStyle = 'rgba(255,135,255,0.55)'; ctx.lineWidth = 2;
-  [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]].forEach(([x, y, sx, sy]) => {
-    ctx.beginPath(); ctx.moveTo(x, y + sy * L); ctx.lineTo(x, y); ctx.lineTo(x + sx * L, y); ctx.stroke();
-  });
   drawLogo(logoTint.grad, 96, 92, 34, 1, 12);
   mono('GENLAYER', 126, 92, 18, C.white, 'left', 0.9, 5);
   mono('// APPEALS', 262, 92, 18, C.g, 'left', 0.8, 3);
@@ -297,12 +292,6 @@ function drawHUD(t, idx, total, a) {
   const blink = Math.floor(t * 2) % 2 === 0;
   ctx.fillStyle = blink ? C.p1 : 'rgba(255,135,255,0.3)'; ctx.beginPath(); ctx.arc(W - 300, 92, 6, 0, 6.28); ctx.fill();
   mono('LIVE', W - 286, 92, 16, C.p1, 'left', 0.9, 3);
-  // progress
-  const p = clamp(t / DURATION);
-  ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(96, H - 74, W - 192, 3);
-  ctx.fillStyle = grad(96, 0, W - 96, 0, [C.g, C.p1, C.p2]); ctx.fillRect(96, H - 74, (W - 192) * p, 3);
-  ctx.fillStyle = C.g; ctx.shadowBlur = 12; ctx.shadowColor = C.g; ctx.fillRect(96 + (W - 192) * p - 3, H - 79, 6, 13);
-  ctx.shadowBlur = 0;
   mono('OPTIMISTIC DEMOCRACY', 96, H - 54, 14, C.dim, 'left', 0.9, 4);
   mono('T+' + t.toFixed(2).padStart(5, '0') + 's', W - 96, H - 54, 14, C.dim, 'right', 0.9, 3);
   ctx.restore();
