@@ -35,12 +35,12 @@ let done = 0; const t0 = Date.now();
 async function worker(k, page) {
   const a = k * per, b = Math.min(total, a + per);
   const seg = path.join(tmp, `seg${k}.mp4`);
-  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'png', '-i', '-',
+  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
     '-c:v', 'libx264', '-preset', 'slow', '-crf', '15', '-pix_fmt', 'yuv420p', '-r', String(FPS), seg], { stdio: ['pipe', 'inherit', 'inherit'] });
   const closed = new Promise(r => ff.on('close', r));
   for (let f = a; f < b; f++) {
     await page.evaluate(t => render(t), f / FPS);
-    const img = await page.screenshot({ type: 'png' });
+    const img = await page.screenshot({ type: 'jpeg', quality: 96 });
     if (!ff.stdin.write(img)) await new Promise(r => ff.stdin.once('drain', r));
     if (++done % 60 === 0) console.log(`${done}/${total}  ${((Date.now() - t0) / done).toFixed(0)} ms/frame`);
   }
