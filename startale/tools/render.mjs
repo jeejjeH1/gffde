@@ -1,5 +1,5 @@
 // Renders index.html frame-by-frame with Playwright, synthesizes the soundtrack,
-// and muxes everything into a 1920x1080 30fps H.264/AAC MP4 (+ a lighter X/Twitter copy).
+// and muxes everything into a 1920x1080 30fps H.264/AAC MP4 (X/Twitter-ready).
 import { chromium } from '/opt/node-tools/node_modules/playwright/index.mjs';
 import { spawn } from 'child_process';
 import fs from 'fs';
@@ -57,8 +57,5 @@ await run(['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', path.
 const out = path.join(outDir, `${NAME}.mp4`);
 await run(['-y', '-loglevel', 'error', '-i', master, '-i', path.join(tmp, 'audio.wav'), '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', '-pix_fmt', 'yuv420p',
   '-c:a', 'aac', '-b:a', '192k', '-shortest', '-movflags', '+faststart', out]);
-const outX = path.join(outDir, `${NAME}-x.mp4`);
-await run(['-y', '-loglevel', 'error', '-i', master, '-i', path.join(tmp, 'audio.wav'), '-c:v', 'libx264', '-preset', 'slow', '-b:v', '6M', '-maxrate', '8M', '-bufsize', '12M',
-  '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-shortest', '-movflags', '+faststart', outX]);
 fs.rmSync(tmp, { recursive: true, force: true });
-console.log('wrote', out, outX, `in ${((Date.now() - t0) / 60000).toFixed(1)} min`);
+console.log('wrote', out, `in ${((Date.now() - t0) / 60000).toFixed(1)} min`);

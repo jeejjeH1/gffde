@@ -1,7 +1,7 @@
 # Startale × JPYSC — "Can stablecoins transform cross-border payments?"
 
 16:9 (1920×1080, 30fps, 69s) motion graphic for an X/Twitter post, in the pastel holographic theme.
-Final video: `out/startale-jpysc.mp4` (high quality) · `out/startale-jpysc-x.mp4` (lighter, X-ready)
+Final video: `out/startale-jpysc.mp4` (H.264 + AAC, 48 MB — uploads directly to X)
 
 | Time | Scene |
 |---|---|
