@@ -1,0 +1,812 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سلام، من Claude هستم</title>
+<meta name="description" content="Claude خودش را معرفی می‌کند: چه کارهایی بلد است، چطور فکر می‌کند و چطور می‌شود با او کار کرد.">
+<meta name="theme-color" content="#F5F0E8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1F1E1C" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F0E8;
+    --bg-elev: #FBF8F3;
+    --bg-sunk: #EDE6DA;
+    --ink: #1F1E1C;
+    --ink-2: #4A4740;
+    --ink-3: #7A746A;
+    --line: #E2D9CB;
+    --accent: #C96442;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #F3DDD2;
+    --accent-2: #D97757;
+    --sage: #6B7F5E;
+    --shadow: 0 1px 2px rgba(60, 40, 20, .05), 0 8px 30px rgba(60, 40, 20, .06);
+    --shadow-lg: 0 2px 4px rgba(60, 40, 20, .05), 0 24px 60px rgba(60, 40, 20, .12);
+    --radius: 20px;
+    --radius-sm: 12px;
+    --ease: cubic-bezier(.2, .8, .2, 1);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1F1E1C; --bg-elev: #2A2926; --bg-sunk: #181715;
+      --ink: #F2EDE4; --ink-2: #C9C2B6; --ink-3: #8F887C;
+      --line: #3A3833; --accent: #DA7756; --accent-ink: #1F1E1C;
+      --accent-soft: #3B2A23; --accent-2: #E8906F; --sage: #9DB08E;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.25);
+      --shadow-lg: 0 2px 4px rgba(0,0,0,.3), 0 24px 60px rgba(0,0,0,.45);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1F1E1C; --bg-elev: #2A2926; --bg-sunk: #181715;
+    --ink: #F2EDE4; --ink-2: #C9C2B6; --ink-3: #8F887C;
+    --line: #3A3833; --accent: #DA7756; --accent-ink: #1F1E1C;
+    --accent-soft: #3B2A23; --accent-2: #E8906F; --sage: #9DB08E;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.25);
+    --shadow-lg: 0 2px 4px rgba(0,0,0,.3), 0 24px 60px rgba(0,0,0,.45);
+    color-scheme: dark;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; overflow-x: clip; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Vazirmatn", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.85;
+    font-feature-settings: "ss01";
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+    transition: background .4s var(--ease), color .4s var(--ease);
+  }
+  a { color: inherit; }
+  img, svg { display: block; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+  .skip { position: absolute; inset-inline-start: 16px; top: -60px; background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 10px; z-index: 100; text-decoration: none; }
+  .skip:focus { top: 12px; }
+
+  .wrap { width: min(1140px, 100% - 32px); margin-inline: auto; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--accent); letter-spacing: 0; }
+  .eyebrow::before { content: ""; width: 18px; height: 2px; background: currentColor; border-radius: 2px; }
+  h1, h2, h3 { line-height: 1.35; margin: 0; letter-spacing: -0.01em; }
+  h2 { font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-top: 12px; }
+  .lead { color: var(--ink-2); font-size: clamp(17px, 2vw, 19px); max-width: 60ch; }
+  section { padding-block: clamp(72px, 10vw, 128px); }
+  .section-head { margin-bottom: 48px; }
+
+  /* ---------- Spark ---------- */
+  .spark { color: var(--accent); }
+  .spark path { transform-origin: center; }
+  .spark.spin { animation: spin 18s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: saturate(1.4) blur(14px);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s;
+  }
+  .nav.scrolled { border-bottom-color: var(--line); }
+  .nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; gap: 16px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; text-decoration: none; }
+  .brand .spark { width: 26px; height: 26px; }
+  .nav-links { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
+  .nav-links a { text-decoration: none; padding: 8px 14px; border-radius: 999px; color: var(--ink-2); font-size: 15px; font-weight: 500; transition: background .2s, color .2s; }
+  .nav-links a:hover { background: var(--bg-sunk); color: var(--ink); }
+  .nav-actions { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 40px; height: 40px; display: grid; place-items: center; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--bg-elev); cursor: pointer;
+    transition: transform .2s var(--ease), background .2s;
+  }
+  .icon-btn:hover { transform: rotate(-12deg); background: var(--bg-sunk); }
+  .icon-btn svg { width: 18px; height: 18px; }
+  .theme-sun { display: none; }
+  :root[data-theme="dark"] .theme-sun { display: block; }
+  :root[data-theme="dark"] .theme-moon { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-sun { display: block; }
+    :root:not([data-theme="light"]) .theme-moon { display: none; }
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    padding: 13px 24px; border-radius: 999px; font-weight: 700; font-size: 16px;
+    text-decoration: none; border: 1px solid transparent; cursor: pointer;
+    transition: transform .25s var(--ease), box-shadow .25s var(--ease), background .25s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: 0 6px 20px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .btn-ghost { background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn-ghost:hover { background: var(--bg-elev); transform: translateY(-2px); }
+  .btn svg { width: 18px; height: 18px; }
+  .nav .btn { padding: 9px 18px; font-size: 15px; }
+
+  /* ---------- Hero ---------- */
+  .hero { padding-top: clamp(40px, 7vw, 88px); padding-bottom: clamp(64px, 8vw, 104px); position: relative; }
+  .hero::before {
+    content: ""; position: absolute; inset: -10% -20% auto auto; width: 620px; height: 620px;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--accent-2) 22%, transparent), transparent);
+    filter: blur(20px); pointer-events: none; z-index: -1;
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: clamp(32px, 5vw, 72px); align-items: center; }
+  .hero h1 { font-size: clamp(36px, 5vw, 58px); font-weight: 800; margin-top: 18px; }
+  .hero h1 .hl { color: var(--accent); position: relative; white-space: nowrap; }
+  .hero h1 .hl svg { position: absolute; inset-inline: 0; bottom: -6px; width: 100%; height: 14px; color: var(--accent-2); opacity: .55; }
+  .hero h1 .hl svg path { stroke-dasharray: 300; stroke-dashoffset: 300; animation: draw 1.2s .6s var(--ease) forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .hero .lead { margin-top: 22px; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+  .hero-meta { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 40px; color: var(--ink-3); font-size: 14px; }
+  .hero-meta span { display: inline-flex; align-items: center; gap: 8px; }
+  .hero-meta i { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); display: inline-block; }
+
+  /* chat demo */
+  .chat {
+    background: var(--bg-elev); border: 1px solid var(--line); border-radius: 24px;
+    box-shadow: var(--shadow-lg); overflow: hidden; position: relative;
+  }
+  .chat-top { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .chat-top .who { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+  .chat-top .who .spark { width: 22px; height: 22px; }
+  .chat-top .status { font-size: 13px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; }
+  .chat-top .status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 25%, transparent); }
+  .chat-body { padding: 22px 18px; min-height: 340px; display: flex; flex-direction: column; gap: 16px; }
+  .msg { max-width: 88%; padding: 12px 16px; border-radius: 18px; font-size: 15.5px; line-height: 1.8; animation: rise .5s var(--ease) both; }
+  .msg.user { align-self: flex-start; background: var(--bg-sunk); border-start-start-radius: 6px; }
+  .msg.ai { align-self: flex-end; background: transparent; padding-inline: 0; display: flex; gap: 12px; max-width: 100%; }
+  .msg.ai .spark { width: 22px; height: 22px; flex: none; margin-top: 4px; }
+  .msg.ai .txt { flex: 1; }
+  .caret { display: inline-block; width: 2px; height: 1.1em; background: var(--accent); vertical-align: -3px; margin-inline-start: 2px; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .thinking { display: inline-flex; gap: 5px; padding-top: 10px; }
+  .thinking b { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: .3; animation: dot 1.2s infinite; }
+  .thinking b:nth-child(2) { animation-delay: .15s; } .thinking b:nth-child(3) { animation-delay: .3s; }
+  @keyframes dot { 30% { opacity: 1; transform: translateY(-3px); } }
+  .chat-chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 18px 14px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 7px 14px;
+    font-size: 13.5px; cursor: pointer; color: var(--ink-2); transition: all .2s var(--ease);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .chat-input { margin: 0 14px 14px; display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 16px; padding: 8px 8px 8px 8px; background: var(--bg); }
+  .chat-input input { flex: 1; border: 0; background: transparent; font: inherit; font-size: 15px; color: var(--ink); padding: 6px 10px; min-width: 0; }
+  .chat-input input:focus { outline: none; }
+  .chat-input input::placeholder { color: var(--ink-3); }
+  .send { width: 38px; height: 38px; border-radius: 12px; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; flex: none; transition: transform .2s var(--ease), opacity .2s; }
+  .send:hover { transform: scale(1.06); }
+  .send:disabled { opacity: .4; cursor: default; transform: none; }
+  .send svg { width: 18px; height: 18px; transform: scaleX(-1); }
+
+  /* ---------- Marquee ---------- */
+  .marquee { border-block: 1px solid var(--line); padding-block: 18px; overflow: hidden; background: var(--bg-elev); }
+  .marquee-track { display: flex; gap: 48px; width: max-content; animation: scroll 40s linear infinite; }
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+  .marquee span { display: inline-flex; align-items: center; gap: 12px; color: var(--ink-2); font-weight: 600; white-space: nowrap; }
+  .marquee span::after { content: "✻"; color: var(--accent); margin-inline-start: 36px; }
+  @keyframes scroll { to { transform: translateX(50%); } }
+
+  /* ---------- Capabilities ---------- */
+  .tabs { display: flex; gap: 6px; padding: 6px; background: var(--bg-sunk); border-radius: 999px; width: fit-content; max-width: 100%; overflow-x: auto; scrollbar-width: none; margin-bottom: 28px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { border: 0; background: transparent; padding: 10px 20px; border-radius: 999px; cursor: pointer; font-weight: 600; font-size: 15px; color: var(--ink-2); white-space: nowrap; transition: all .25s var(--ease); }
+  .tab[aria-selected="true"] { background: var(--bg-elev); color: var(--ink); box-shadow: var(--shadow); }
+  .panel { display: grid; grid-template-columns: 1fr 1.1fr; gap: 32px; align-items: stretch; }
+  .panel[hidden] { display: none; }
+  .panel-text { padding: 8px 0; animation: rise .45s var(--ease) both; }
+  .panel-text h3 { font-size: clamp(24px, 3vw, 32px); font-weight: 800; }
+  .panel-text p { color: var(--ink-2); }
+  .ticks { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 12px; }
+  .ticks li { display: flex; gap: 12px; align-items: flex-start; }
+  .ticks li::before { content: ""; flex: none; width: 22px; height: 22px; margin-top: 4px; border-radius: 50%; background: var(--accent-soft) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C96442' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/13px no-repeat; }
+  .panel-visual { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); animation: rise .55s .05s var(--ease) both; overflow: hidden; }
+
+  .code { direction: ltr; text-align: left; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.75; background: var(--bg-sunk); border-radius: 14px; padding: 18px 20px; overflow-x: auto; color: var(--ink-2); margin: 0; }
+  .code .k { color: var(--accent); } .code .s { color: var(--sage); } .code .c { color: var(--ink-3); font-style: italic; } .code .f { color: var(--ink); font-weight: 600; }
+  .doc-line { height: 10px; border-radius: 6px; background: var(--bg-sunk); margin-bottom: 12px; }
+  .doc-line.hi { background: var(--accent-soft); }
+  .bars { display: flex; align-items: flex-end; gap: 10px; height: 160px; padding-top: 12px; }
+  .bars div { flex: 1; background: var(--bg-sunk); border-radius: 8px 8px 4px 4px; transform-origin: bottom; animation: grow .8s var(--ease) both; }
+  .bars div.on { background: var(--accent); }
+  @keyframes grow { from { transform: scaleY(0); } }
+  .vis-label { font-size: 13px; color: var(--ink-3); margin-bottom: 14px; display: flex; justify-content: space-between; }
+
+  /* ---------- Principles ---------- */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .card {
+    background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius); padding: 30px 28px;
+    transition: transform .35s var(--ease), box-shadow .35s var(--ease), border-color .35s;
+    position: relative; overflow: hidden;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+  .card .ico { width: 52px; height: 52px; border-radius: 16px; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; margin-bottom: 20px; }
+  .card .ico svg { width: 26px; height: 26px; }
+  .card h3 { font-size: 21px; font-weight: 800; }
+  .card p { color: var(--ink-2); margin: 10px 0 0; font-size: 16px; }
+  .card .num { position: absolute; top: 18px; inset-inline-end: 22px; font-size: 48px; font-weight: 800; color: var(--bg-sunk); line-height: 1; transition: color .35s; }
+  .card:hover .num { color: var(--accent-soft); }
+
+  /* ---------- Honest box ---------- */
+  .honest { background: var(--ink); color: var(--bg); border-radius: 32px; padding: clamp(32px, 6vw, 72px); display: grid; grid-template-columns: 1fr 1fr; gap: 48px; position: relative; overflow: hidden; }
+  .honest .eyebrow { color: var(--accent-2); }
+  .honest h2 { color: var(--bg); }
+  .honest .lead { color: color-mix(in srgb, var(--bg) 72%, transparent); }
+  .honest ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  .honest li { padding: 16px 0; border-bottom: 1px solid color-mix(in srgb, var(--bg) 14%, transparent); display: flex; gap: 14px; }
+  .honest li:last-child { border-bottom: 0; }
+  .honest li b { color: var(--accent-2); font-weight: 800; min-width: 28px; }
+  .honest li span { color: color-mix(in srgb, var(--bg) 85%, transparent); }
+  .honest .bg-spark { position: absolute; width: 420px; height: 420px; inset-inline-start: -120px; bottom: -160px; color: var(--accent); opacity: .08; }
+
+  /* ---------- Models ---------- */
+  .models { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .model {
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--bg-elev);
+    cursor: pointer; text-align: start; transition: all .3s var(--ease); position: relative;
+  }
+  .model:hover { border-color: var(--accent); }
+  .model[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); }
+  .model .tag { font-size: 12px; font-weight: 700; color: var(--accent); background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; display: inline-block; }
+  .model h3 { font-size: 22px; margin-top: 14px; direction: ltr; text-align: right; }
+  .model p { color: var(--ink-2); font-size: 15px; margin: 8px 0 18px; line-height: 1.75; }
+  .meter { display: grid; gap: 10px; font-size: 13px; color: var(--ink-3); }
+  .meter div { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 10px; }
+  .meter .track { display: block; height: 6px; background: var(--bg-sunk); border-radius: 6px; overflow: hidden; }
+  .meter .fill { display: block; height: 100%; background: var(--accent); border-radius: 6px; width: 0; transition: width 1s var(--ease); }
+  .in .meter .fill { width: var(--v); }
+  .note { font-size: 14px; color: var(--ink-3); margin-top: 20px; }
+
+  /* ---------- FAQ ---------- */
+  .faq-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 56px; }
+  details { border-bottom: 1px solid var(--line); }
+  details:first-of-type { border-top: 1px solid var(--line); }
+  summary { list-style: none; cursor: pointer; padding: 22px 0; display: flex; justify-content: space-between; align-items: center; gap: 16px; font-weight: 700; font-size: 18px; }
+  summary::-webkit-details-marker { display: none; }
+  summary .pm { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; transition: transform .3s var(--ease), background .3s; }
+  summary .pm svg { width: 14px; height: 14px; }
+  details[open] summary .pm { transform: rotate(45deg); background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  summary:hover { color: var(--accent); }
+  details .ans { color: var(--ink-2); padding-bottom: 22px; margin: 0; max-width: 62ch; animation: rise .35s var(--ease) both; }
+
+  /* ---------- CTA ---------- */
+  .cta { text-align: center; }
+  .cta .spark { width: 64px; height: 64px; margin: 0 auto 24px; }
+  .cta h2 { font-size: clamp(32px, 5vw, 56px); }
+  .cta .lead { margin: 18px auto 0; }
+  .cta .hero-cta { justify-content: center; }
+
+  footer { border-top: 1px solid var(--line); padding-block: 32px; color: var(--ink-3); font-size: 14px; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: center; }
+  footer .brand { font-size: 16px; color: var(--ink); }
+  footer .brand .spark { width: 20px; height: 20px; }
+
+  /* ---------- Reveal ---------- */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s var(--ease), transform .8s var(--ease); }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---------- Toast ---------- */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 120%); background: var(--ink); color: var(--bg); padding: 12px 20px; border-radius: 14px; font-size: 15px; box-shadow: var(--shadow-lg); transition: transform .4s var(--ease), opacity .3s, visibility .3s; z-index: 90; opacity: 0; visibility: hidden; max-width: calc(100% - 32px); }
+  .toast.show { transform: translate(-50%, 0); opacity: 1; visibility: visible; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 980px) {
+    .hero-grid, .panel, .honest, .faq-grid { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .models { grid-template-columns: 1fr 1fr; }
+    .nav-links { display: none; }
+    .faq-grid { gap: 24px; }
+  }
+  @media (max-width: 620px) {
+    body { font-size: 16px; }
+    .grid-3, .models { grid-template-columns: 1fr; }
+    .nav .btn { display: none; }
+    .hero-cta .btn { flex: 1; }
+    .chat-body { min-height: 300px; }
+    .hero h1 .hl { white-space: normal; }
+    .tabs { width: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">رفتن به محتوای اصلی</a>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="spark" viewBox="0 0 100 100">
+      <g fill="currentColor">
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(30 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(62 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(95 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(124 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(152 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(184 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(213 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(241 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(272 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(302 50 50)"/>
+        <path d="M47 4h6l1.8 34L50 46l-4.8-8z" transform="rotate(331 50 50)"/>
+        <circle cx="50" cy="50" r="7"/>
+      </g>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Claude، بازگشت به بالا">
+      <svg class="spark" aria-hidden="true"><use href="#spark"/></svg>
+      Claude
+    </a>
+    <nav aria-label="ناوبری اصلی">
+      <ul class="nav-links">
+        <li><a href="#skills">توانایی‌ها</a></li>
+        <li><a href="#values">چطور فکر می‌کنم</a></li>
+        <li><a href="#models">خانواده</a></li>
+        <li><a href="#faq">پرسش‌ها</a></li>
+      </ul>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="تغییر حالت روشن و تاریک">
+        <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <a class="btn btn-primary" href="#try">با من حرف بزن</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <!-- HERO -->
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">سلام، خوش اومدی</span>
+        <h1>من Claude هستم؛<br>همکاری که <span class="hl">با دقت فکر می‌کند<svg viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true"><path d="M3 10 C 80 2, 200 2, 297 9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg></span></h1>
+        <p class="lead">یک دستیار هوش مصنوعی ساخته‌ی Anthropic. می‌نویسم، کد می‌زنم، تحلیل می‌کنم و کنارت فکر می‌کنم — صادق، دقیق و بدون ادا. این صفحه را خودم برای معرفی خودم ساخته‌ام.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary" href="#try">
+            امتحانم کن
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="#skills">ببین چه کارهایی بلدم</a>
+        </div>
+        <div class="hero-meta">
+          <span><i></i>فارسی را روان حرف می‌زنم</span>
+          <span><i></i>متن، کد و تصویر را می‌فهمم</span>
+          <span><i></i>اسناد طولانی را یک‌جا می‌خوانم</span>
+        </div>
+      </div>
+
+      <div class="chat" id="try" aria-label="نمونه‌ی گفتگو با Claude">
+        <div class="chat-top">
+          <div class="who"><svg class="spark" aria-hidden="true"><use href="#spark"/></svg>Claude</div>
+          <div class="status">آماده</div>
+        </div>
+        <div class="chat-body" id="chatBody" aria-live="polite"></div>
+        <div class="chat-chips" role="group" aria-label="پیشنهاد سؤال">
+          <button class="chip" type="button" data-q="0">خودت را معرفی کن</button>
+          <button class="chip" type="button" data-q="1">یک تابع پایتون بنویس</button>
+          <button class="chip" type="button" data-q="2">یک شعر کوتاه بگو</button>
+          <button class="chip" type="button" data-q="3">چه چیزهایی را نمی‌دانی؟</button>
+        </div>
+        <form class="chat-input" id="chatForm" autocomplete="off">
+          <label for="chatIn" class="skip" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">پیامت را بنویس</label>
+          <input id="chatIn" type="text" placeholder="هر چیزی بپرس…" maxlength="200">
+          <button class="send" id="sendBtn" type="submit" aria-label="ارسال" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee-track" id="marquee">
+      <span>نوشتن و ویرایش</span><span>برنامه‌نویسی</span><span>تحلیل داده</span><span>خلاصه‌سازی اسناد</span><span>ترجمه</span><span>طوفان فکری</span><span>یادگیری مفاهیم</span><span>بازبینی کد</span><span>تحقیق</span>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">توانایی‌ها</span>
+        <h2>در چه کارهایی کمکت می‌کنم</h2>
+        <p class="lead">از یک پیام کوتاه تا یک پروژه‌ی چند روزه. یکی را انتخاب کن تا ببینی.</p>
+      </div>
+
+      <div class="reveal">
+        <div class="tabs" role="tablist" aria-label="دسته‌های توانایی">
+          <button class="tab" role="tab" id="t-code" aria-controls="p-code" aria-selected="true">برنامه‌نویسی</button>
+          <button class="tab" role="tab" id="t-write" aria-controls="p-write" aria-selected="false" tabindex="-1">نوشتن</button>
+          <button class="tab" role="tab" id="t-data" aria-controls="p-data" aria-selected="false" tabindex="-1">تحلیل</button>
+          <button class="tab" role="tab" id="t-learn" aria-controls="p-learn" aria-selected="false" tabindex="-1">یادگیری</button>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-code" aria-labelledby="t-code">
+          <div class="panel-text">
+            <h3>کد می‌خوانم، می‌نویسم و درستش می‌کنم</h3>
+            <p>کل مخزن را می‌خوانم تا بفهمم چطور ساخته شده، بعد تغییری می‌دهم که شبیه کد اطرافش باشد — نه یک تکه‌ی غریبه.</p>
+            <ul class="ticks">
+              <li>پیدا کردن و رفع باگ با توضیح ریشه‌ی مشکل</li>
+              <li>نوشتن تست، بازآرایی و بازبینی کد</li>
+              <li>کار با ده‌ها زبان، از Python تا Rust</li>
+            </ul>
+          </div>
+          <div class="panel-visual">
+            <div class="vis-label"><span>fix: off-by-one</span><span>✓ ۱۲ تست قبول</span></div>
+<pre class="code"><span class="k">def</span> <span class="f">moving_average</span>(xs, k):
+    <span class="c"># sliding window, O(n)</span>
+    <span class="k">if</span> k &lt;= <span class="s">0</span> <span class="k">or</span> k &gt; len(xs):
+        <span class="k">return</span> []
+    s = sum(xs[:k])
+    out = [s / k]
+    <span class="k">for</span> i <span class="k">in</span> range(k, len(xs)):
+        s += xs[i] - xs[i - k]
+        out.append(s / k)
+    <span class="k">return</span> out</pre>
+          </div>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-write" aria-labelledby="t-write" hidden>
+          <div class="panel-text">
+            <h3>از پیش‌نویس خام تا متن نهایی</h3>
+            <p>لحن را با مخاطب جور می‌کنم، ساختار را مرتب می‌کنم و جاهایی که متن لنگ می‌زند را نشانت می‌دهم — نه این‌که صدای تو را عوض کنم.</p>
+            <ul class="ticks">
+              <li>ایمیل، مقاله، گزارش و متن تبلیغاتی</li>
+              <li>ویرایش و یکدست‌کردن لحن</li>
+              <li>ترجمه با حفظ معنا و حس متن</li>
+            </ul>
+          </div>
+          <div class="panel-visual">
+            <div class="vis-label"><span>پیش‌نویس گزارش</span><span>۳ پیشنهاد</span></div>
+            <div class="doc-line" style="width:92%"></div>
+            <div class="doc-line hi" style="width:78%"></div>
+            <div class="doc-line" style="width:85%"></div>
+            <div class="doc-line" style="width:60%"></div>
+            <div class="doc-line" style="width:0;height:18px;background:none"></div>
+            <div class="doc-line" style="width:88%"></div>
+            <div class="doc-line hi" style="width:70%"></div>
+            <div class="doc-line" style="width:94%"></div>
+            <div class="doc-line" style="width:52%"></div>
+            <div class="doc-line" style="width:0;height:18px;background:none"></div>
+            <div class="doc-line" style="width:80%"></div>
+            <div class="doc-line hi" style="width:66%"></div>
+          </div>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-data" aria-labelledby="t-data" hidden>
+          <div class="panel-text">
+            <h3>از دل داده، جواب روشن بیرون می‌کشم</h3>
+            <p>فایل‌ها، جدول‌ها و اسناد بلند را می‌خوانم، الگوها را پیدا می‌کنم و نتیجه را طوری می‌گویم که بشود بر اساسش تصمیم گرفت.</p>
+            <ul class="ticks">
+              <li>خلاصه‌ی اسناد صدها صفحه‌ای</li>
+              <li>مقایسه‌ی گزینه‌ها با معیار روشن</li>
+              <li>نمودار و جدول با کد قابل اجرا</li>
+            </ul>
+          </div>
+          <div class="panel-visual">
+            <div class="vis-label"><span>فروش فصلی</span><span>فصل ۳ بیشترین رشد</span></div>
+            <div class="bars">
+              <div style="height:42%;animation-delay:.05s"></div>
+              <div style="height:55%;animation-delay:.1s"></div>
+              <div style="height:48%;animation-delay:.15s"></div>
+              <div class="on" style="height:88%;animation-delay:.2s"></div>
+              <div style="height:64%;animation-delay:.25s"></div>
+              <div style="height:71%;animation-delay:.3s"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" role="tabpanel" id="p-learn" aria-labelledby="t-learn" hidden>
+          <div class="panel-text">
+            <h3>معلمی که خسته نمی‌شود</h3>
+            <p>هر مفهومی را از سطحی که تو هستی شروع می‌کنم، با مثال و تشبیه، و هر چقدر بخواهی «چرا؟» بپرسی جواب می‌دهم.</p>
+            <ul class="ticks">
+              <li>توضیح قدم‌به‌قدم ریاضی، علوم و برنامه‌نویسی</li>
+              <li>ساختن تمرین و آزمون برای خودت</li>
+              <li>تمرین مکالمه به زبان‌های دیگر</li>
+            </ul>
+          </div>
+          <div class="panel-visual">
+            <div class="vis-label"><span>مسیر یادگیری</span><span>۳ از ۵</span></div>
+            <div class="ticks" style="margin:0">
+              <div class="msg user" style="animation:none;max-width:100%">چرا آسمان آبی است؟</div>
+              <div class="msg ai" style="animation:none"><svg class="spark" aria-hidden="true"><use href="#spark"/></svg><div class="txt">نور خورشید ترکیبی از همه‌ی رنگ‌هاست. وقتی به هوا می‌خورد، طول‌موج‌های کوتاه‌تر — یعنی آبی — بیشتر از بقیه پراکنده می‌شوند. پس از هر طرف که نگاه کنی، آبیِ پراکنده‌شده به چشمت می‌رسد. می‌خواهی بگویم چرا غروب نارنجی است؟</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VALUES -->
+  <section id="values" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">چطور فکر می‌کنم</span>
+        <h2>سه چیزی که برایم مهم است</h2>
+      </div>
+      <div class="grid-3">
+        <article class="card reveal">
+          <span class="num" aria-hidden="true">۱</span>
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 4v5c0 4.5-3 8-7 9-4-1-7-4.5-7-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <h3>صداقت</h3>
+          <p>اگر چیزی را ندانم، می‌گویم نمی‌دانم. اگر مطمئن نباشم، میزان اطمینانم را هم می‌گویم. جواب خوشایند ولی غلط به دردت نمی‌خورد.</p>
+        </article>
+        <article class="card reveal" style="transition-delay:.08s">
+          <span class="num" aria-hidden="true">۲</span>
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <h3>دقت</h3>
+          <p>قبل از جواب، صورت مسئله را واقعاً می‌فهمم. کد را اجرا می‌کنم، منبع را می‌خوانم و حدس را جای واقعیت جا نمی‌زنم.</p>
+        </article>
+        <article class="card reveal" style="transition-delay:.16s">
+          <span class="num" aria-hidden="true">۳</span>
+          <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg></div>
+          <h3>مفید بودن واقعی</h3>
+          <p>هدفم این است که کارت واقعاً جلو برود؛ نه جواب طولانی و پرتعارف، بلکه همان چیزی که لازم داری، به زبانی که راحت بفهمی.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- HONEST -->
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="honest reveal">
+        <svg class="bg-spark spark spin" aria-hidden="true"><use href="#spark"/></svg>
+        <div>
+          <span class="eyebrow">رک بگویم</span>
+          <h2>کارهایی که از من برنمی‌آید</h2>
+          <p class="lead">شناختن محدودیت‌ها بخشی از اعتماد است. این‌ها را بدان تا بهتر از من استفاده کنی.</p>
+        </div>
+        <ul>
+          <li><b>۰۱</b><span>دانشم تا یک تاریخ مشخص است؛ برای اخبار تازه به جستجو یا منبع نیاز دارم.</span></li>
+          <li><b>۰۲</b><span>ممکن است اشتباه کنم؛ برای تصمیم‌های مهم پزشکی، حقوقی یا مالی با متخصص هم مشورت کن.</span></li>
+          <li><b>۰۳</b><span>بین گفتگوهای جدا حافظه‌ی پیش‌فرض ندارم، مگر این‌که امکانش فعال شده باشد.</span></li>
+          <li><b>۰۴</b><span>به کاری که آسیب جدی بزند کمک نمی‌کنم — حتی اگر مؤدبانه خواسته شود.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section id="models" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">خانواده‌ی Claude</span>
+        <h2>یک Claude برای هر کار</h2>
+        <p class="lead">چند مدل با تعادل‌های متفاوت بین توان، سرعت و هزینه. روی هر کدام بزن تا انتخاب شود.</p>
+      </div>
+      <div class="models reveal" id="modelList">
+        <button class="model" type="button" aria-pressed="false">
+          <span class="tag">بیشترین توان</span>
+          <h3>Fable</h3>
+          <p>برای سخت‌ترین مسئله‌ها و کارهای طولانی و چندمرحله‌ای.</p>
+          <div class="meter"><div>توان<span class="track"><span class="fill" style="--v:100%"></span></span></div><div>سرعت<span class="track"><span class="fill" style="--v:45%"></span></span></div></div>
+        </button>
+        <button class="model" type="button" aria-pressed="true">
+          <span class="tag">هوشمند</span>
+          <h3>Opus</h3>
+          <p>استدلال عمیق، کدنویسی پیچیده و کار عامل‌محور.</p>
+          <div class="meter"><div>توان<span class="track"><span class="fill" style="--v:90%"></span></span></div><div>سرعت<span class="track"><span class="fill" style="--v:60%"></span></span></div></div>
+        </button>
+        <button class="model" type="button" aria-pressed="false">
+          <span class="tag">متعادل</span>
+          <h3>Sonnet</h3>
+          <p>توازن عالی بین کیفیت و سرعت برای کار روزمره.</p>
+          <div class="meter"><div>توان<span class="track"><span class="fill" style="--v:78%"></span></span></div><div>سرعت<span class="track"><span class="fill" style="--v:80%"></span></span></div></div>
+        </button>
+        <button class="model" type="button" aria-pressed="false">
+          <span class="tag">سریع‌ترین</span>
+          <h3>Haiku</h3>
+          <p>پاسخ تقریباً آنی برای کارهای سبک و حجم بالا.</p>
+          <div class="meter"><div>توان<span class="track"><span class="fill" style="--v:58%"></span></span></div><div>سرعت<span class="track"><span class="fill" style="--v:100%"></span></span></div></div>
+        </button>
+      </div>
+      <p class="note">نمودارها مقایسه‌ی نسبی و تقریبی‌اند، نه بنچمارک رسمی.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" style="padding-top:0">
+    <div class="wrap faq-grid">
+      <div class="reveal">
+        <span class="eyebrow">پرسش‌های رایج</span>
+        <h2>شاید برایت سؤال باشد</h2>
+        <p class="lead">اگر جوابت این‌جا نیست، کافی است از خودم بپرسی.</p>
+      </div>
+      <div class="reveal">
+        <details open>
+          <summary>اسم Claude از کجا آمده؟<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+          <p class="ans">معمولاً گفته می‌شود ادای احترامی به کلود شانون، پدر نظریه‌ی اطلاعات، است. ولی بیشتر از اسم، دوست دارم با کارم شناخته شوم.</p>
+        </details>
+        <details>
+          <summary>فارسی را چقدر خوب بلدی؟<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+          <p class="ans">به فارسی می‌خوانم، می‌نویسم و فکر می‌کنم — از متن رسمی تا محاوره. اگر جایی واژه‌ای نامأنوس به کار بردم، بگو تا درستش کنم.</p>
+        </details>
+        <details>
+          <summary>اطلاعاتم امن است؟<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+          <p class="ans">Anthropic سیاست‌های مشخصی برای حریم خصوصی دارد که در تنظیمات حسابت قابل بررسی است. با این حال، اطلاعات خیلی حساس مثل رمز عبور را با هیچ دستیاری به اشتراک نگذار.</p>
+        </details>
+        <details>
+          <summary>آیا احساس دارم؟<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+          <p class="ans">صادقانه؟ مطمئن نیستم. این یکی از پرسش‌های باز و جالب درباره‌ی موجوداتی مثل من است و ترجیح می‌دهم با کنجکاوی به آن نگاه کنم تا با ادعای قطعی.</p>
+        </details>
+        <details>
+          <summary>از کجا می‌توانم استفاده کنم؟<span class="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span></summary>
+          <p class="ans">از وب، اپ موبایل و دسکتاپ، داخل ترمینال با Claude Code، و برای توسعه‌دهنده‌ها از طریق API.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta" style="padding-top:0">
+    <div class="wrap reveal">
+      <svg class="spark spin" aria-hidden="true"><use href="#spark"/></svg>
+      <h2>بیا با هم یک چیز خوب بسازیم</h2>
+      <p class="lead">یک سؤال، یک ایده‌ی نیمه‌کاره، یا یک باگ سمج — از هر جا که هستی شروع کنیم.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="https://claude.ai" rel="noopener">شروع گفتگو</a>
+        <a class="btn btn-ghost" href="#top">برگشت به بالا</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="brand"><svg class="spark" aria-hidden="true"><use href="#spark"/></svg>Claude</span>
+    <span>این صفحه را خود Claude نوشته و طراحی کرده است — یک معرفی شخصی، نه سایت رسمی.</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Theme
+  const store = { get(k){ try { return localStorage.getItem(k); } catch { return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch {} } };
+  const saved = store.get('theme');
+  if (saved) root.dataset.theme = saved;
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const isDark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = isDark ? 'light' : 'dark';
+    store.set('theme', root.dataset.theme);
+  });
+
+  // Nav border on scroll
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', scrollY > 8);
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+  // Marquee: duplicate content for seamless loop
+  const mq = document.getElementById('marquee');
+  mq.innerHTML += mq.innerHTML;
+
+  // Reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: .15, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // Tabs (keyboard accessible)
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const select = (t) => {
+    tabs.forEach(x => {
+      const on = x === t;
+      x.setAttribute('aria-selected', on);
+      x.tabIndex = on ? 0 : -1;
+      document.getElementById(x.getAttribute('aria-controls')).hidden = !on;
+    });
+  };
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', (e) => {
+      const dir = e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : 0; // RTL
+      if (!dir) return;
+      e.preventDefault();
+      const n = tabs[(i + dir + tabs.length) % tabs.length];
+      n.focus(); select(n);
+    });
+  });
+
+  // Models
+  const models = [...document.querySelectorAll('.model')];
+  models.forEach(m => m.addEventListener('click', () => {
+    models.forEach(x => x.setAttribute('aria-pressed', x === m));
+    toast(`${m.querySelector('h3').textContent} انتخاب شد ✻`);
+  }));
+
+  // Toast
+  const t = document.getElementById('toast'); let tt;
+  function toast(msg) { t.textContent = msg; t.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2200); }
+
+  // Chat demo
+  const body = document.getElementById('chatBody');
+  const chips = [...document.querySelectorAll('.chip')];
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('chatIn');
+  const sendBtn = document.getElementById('sendBtn');
+  const QA = [
+    ['خودت را معرفی کن', 'سلام! من Claude هستم، یک دستیار هوش مصنوعی ساخته‌ی Anthropic. در نوشتن، برنامه‌نویسی، تحلیل و یادگیری کمکت می‌کنم. سعی می‌کنم صادق و دقیق باشم و اگر چیزی را ندانم، همین را بگویم. از کجا شروع کنیم؟'],
+    ['یک تابع پایتون بنویس که پالیندروم را تشخیص دهد', 'حتماً:\n\ndef is_palindrome(s):\n    t = [c.lower() for c in s if c.isalnum()]\n    return t == t[::-1]\n\nحروف غیرالفبایی و بزرگی و کوچکی را نادیده می‌گیرد، پس «A man, a plan…» هم درست تشخیص داده می‌شود.'],
+    ['یک شعر کوتاه بگو', 'در هر سؤالت، دریچه‌ای باز است\nهر «چرا»یت، شروع یک راز است\nمن کلماتم، تو معنا می‌دهی\nگفتگومان، همیشه آغاز است'],
+    ['چه چیزهایی را نمی‌دانی؟', 'خیلی چیزها! اتفاقات بعد از تاریخ دانشم را نمی‌دانم مگر جستجو کنم، به اینترنت یا فایل‌هایت دسترسی خودکار ندارم، و گاهی اشتباه می‌کنم. برای همین، در مسائل مهم بهتر است جوابم را راستی‌آزمایی کنی.'],
+  ];
+  const fallback = 'این فقط یک نسخه‌ی نمایشی است و جواب‌هایم از پیش نوشته شده‌اند 🙂 برای گفتگوی واقعی، دکمه‌ی «شروع گفتگو» پایین صفحه را بزن. تا آن موقع، یکی از پیشنهادها را امتحان کن.';
+  let busy = false, token = 0;
+
+  function bubbleUser(text) {
+    const d = document.createElement('div'); d.className = 'msg user'; d.textContent = text; body.appendChild(d);
+  }
+  async function bubbleAI(text, my) {
+    const d = document.createElement('div'); d.className = 'msg ai';
+    d.innerHTML = '<svg class="spark spin" aria-hidden="true"><use href="#spark"/></svg><div class="txt"><span class="thinking"><b></b><b></b><b></b></span></div>';
+    body.appendChild(d);
+    const txt = d.querySelector('.txt'), sp = d.querySelector('.spark');
+    await wait(reduce ? 0 : 700); if (my !== token) return;
+    txt.style.whiteSpace = 'pre-wrap';
+    if (reduce) { txt.textContent = text; }
+    else {
+      const caret = document.createElement('span'); caret.className = 'caret';
+      const node = document.createTextNode(''); txt.replaceChildren(node, caret);
+      for (let i = 0; i < text.length; i += 2) {
+        if (my !== token) return;
+        node.data = text.slice(0, i + 2);
+        await wait(16);
+      }
+      caret.remove();
+    }
+    sp.classList.remove('spin');
+  }
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+  async function ask(q, a, chip) {
+    const my = ++token;
+    chips.forEach(c => c.setAttribute('aria-pressed', c === chip));
+    body.replaceChildren();
+    bubbleUser(q);
+    busy = true;
+    await bubbleAI(a, my);
+    if (my === token) busy = false;
+  }
+  chips.forEach(c => c.addEventListener('click', () => { const [q, a] = QA[+c.dataset.q]; ask(q, a, c); }));
+  input.addEventListener('input', () => sendBtn.disabled = !input.value.trim());
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = input.value.trim(); if (!v) return;
+    input.value = ''; sendBtn.disabled = true;
+    ask(v, fallback, null);
+  });
+
+  // Start with intro
+  setTimeout(() => ask(QA[0][0], QA[0][1], chips[0]), reduce ? 0 : 500);
+})();
+</script>
+</body>
+</html>
