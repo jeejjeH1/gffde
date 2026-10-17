@@ -3,25 +3,47 @@
   "name": "Ollama X Reply",
   "version": "0.1.0",
   "description": "Generate replies on X with a local Ollama model. No account, no cloud.",
-  "permissions": ["storage", "declarativeNetRequest"],
+  "permissions": [
+    "storage",
+    "declarativeNetRequest"
+  ],
   "host_permissions": [
     "https://x.com/*",
     "https://twitter.com/*",
-    "http://localhost:11434/*",
-    "http://127.0.0.1:11434/*"
+    "http://*/*"
   ],
-  "optional_host_permissions": ["http://*/*", "https://*/*"],
-  "background": { "service_worker": "background.js" },
-  "action": { "default_title": "Ollama X Reply" },
+  "optional_host_permissions": [
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Ollama X Reply"
+  },
   "options_page": "options.html",
   "declarative_net_request": {
-    "rule_resources": [{ "id": "ollama_origin", "enabled": true, "path": "rules.json" }]
+    "rule_resources": [
+      {
+        "id": "ollama_origin",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
   },
   "content_scripts": [
     {
-      "matches": ["https://x.com/*", "https://twitter.com/*"],
-      "js": ["lib.js", "content.js"],
-      "css": ["content.css"],
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "lib.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_idle"
     }
   ]

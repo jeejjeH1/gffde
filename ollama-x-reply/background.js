@@ -32,7 +32,7 @@ async function ollamaChat(cfg, prompt, maxTokens) {
       })
     });
   } catch (_) {
-    throw new Error("Cannot reach Ollama. Is it running at " + cfg.baseUrl + "?");
+    throw new Error("Cannot reach Ollama at " + cfg.baseUrl + ". On a phone, localhost is the phone itself: use your computer's LAN IP (e.g. http://192.168.1.20:11434) and start Ollama with OLLAMA_HOST=0.0.0.0.");
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

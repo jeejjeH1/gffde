@@ -26,7 +26,7 @@
   </div>
   <button id="refresh">Load installed models</button>
   <button id="test">Test connection</button>
-  <p>If you see 403 errors, run Ollama with <code>OLLAMA_ORIGINS=chrome-extension://*</code>. Default localhost:11434 is handled automatically.</p>
+  <p><b>On a phone:</b> use your computer's LAN IP, e.g. <code>http://192.168.1.20:11434</code>, start Ollama with <code>OLLAMA_HOST=0.0.0.0</code>, keep both on the same Wi-Fi and turn the VPN off. Requests to port 11434 on any host have their Origin header stripped automatically.</p><p>If you see 403 errors, run Ollama with <code>OLLAMA_ORIGINS=chrome-extension://*</code>. Default localhost:11434 is handled automatically.</p>
 </fieldset>
 <fieldset>
   <legend>Profile</legend>
