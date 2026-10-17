@@ -84,10 +84,10 @@
   }
 
   function sanitizeReply(raw) {
-    let t = String(raw || "").replace(/<think>[\s\S]*?<\/think>/gi, "");
-    t = normalizeSpace(t).replace(/^(reply|response)\s*:\s*/i, "");
-    if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("“") && t.endsWith("”"))) t = t.slice(1, -1).trim();
-    return t;
+    let t = normalizeSpace(String(raw || "").replace(/<think>[\s\S]*?<\/think>/gi, ""));
+    const unquote = (x) => ((x.startsWith('"') && x.endsWith('"')) || (x.startsWith("“") && x.endsWith("”"))) && x.length > 1 ? x.slice(1, -1).trim() : x;
+    t = unquote(t).replace(/^(reply|response)\s*:\s*/i, "");
+    return unquote(t);
   }
 
   function validateReply(raw, profile, recent) {
