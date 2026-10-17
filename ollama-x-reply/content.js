@@ -2,7 +2,7 @@
   "use strict";
 
   const ARTICLE = 'article[data-testid="tweet"]';
-  const EDITOR = '[data-testid="tweetTextarea_0"][contenteditable="true"], div[contenteditable="true"][role="textbox"]';
+  const EDITOR = '[data-testid^="tweetTextarea"][contenteditable="true"], div[contenteditable="true"][role="textbox"], .DraftEditor-root [contenteditable="true"]';
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   function toast(text, error) {
@@ -44,10 +44,13 @@
     const reply = article.querySelector('[data-testid="reply"]');
     if (!reply) throw new Error("Reply button not found.");
     reply.click();
-    for (let i = 0; i < 40; i++) {
-      const fresh = visibleEditors().filter((e) => !before.has(e));
+    // Mobile X navigates to /compose/post, which can take several seconds to render.
+    for (let i = 0; i < 150; i++) {
+      const all = visibleEditors();
+      const fresh = all.filter((e) => !before.has(e));
       if (fresh.length) return fresh[fresh.length - 1];
-      if (i >= 8 && visibleEditors().length) return visibleEditors().pop();
+      if (i >= 10 && all.length && /\/compose\//.test(location.pathname)) return all[all.length - 1];
+      if (i >= 30 && all.length) return all[all.length - 1];
       await sleep(100);
     }
     throw new Error("Reply composer did not open.");
@@ -82,7 +85,14 @@
         payload: { context: { text, author: author(article), thread: threadBefore(article) } }
       });
       if (!res || !res.ok) throw new Error(res ? res.error : "No response from extension.");
-      const editor = await openComposer(article);
+      let editor;
+      try {
+        editor = await openComposer(article);
+      } catch (e) {
+        try { await navigator.clipboard.writeText(res.text); } catch (_) {}
+        return toast(`${e.message} Your reply: ${res.text}`, true);
+      }
+      await sleep(300);
       insertText(editor, res.text);
       if (res.autoPost) await clickPost(editor);
     } catch (e) {
