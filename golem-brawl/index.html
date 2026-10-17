@@ -1097,7 +1097,7 @@ function spawnBot(type, x, z) {
   const { g, parts } = buildBot(type);
   scene.add(g);
   const b = {
-    type, g, parts, hp: T.hp, maxHp: T.hp, score: T.score, speed: T.speed * (1 + Math.min(0.5, (Waves_n() - 1) * 0.05)), mass: T.mass, radius: T.radius,
+    type, g, parts, hp: T.hp, maxHp: T.hp, score: T.score, speed: T.speed * D.speed() * rand(0.92, 1.08), mass: T.mass, radius: T.radius,
     pos: g.position, vel: new THREE.Vector3(), air: true, state: 'drop', st: 0, t: Math.random() * 10, flash: 0, dead: false, stun: 0,
     aim: new THREE.Vector3(), dir: new THREE.Vector3(), cool: rand(1.2, 2.5), hover: type === 'drone' ? rand(2.2, 2.8) : 0, orbitA: rand(0, TAU), spin: 0, thrown: false, held: false, squash: 0,
   };
@@ -1121,7 +1121,7 @@ const orbs = [];
 const orbGeo = new THREE.SphereGeometry(0.22, 14, 10);
 function fireOrb(from, target) {
   const m = new THREE.Mesh(orbGeo, glowMat(5, 0.6, 1.1)); m.position.copy(from); scene.add(m);
-  const v = target.clone().sub(from).normalize().multiplyScalar(7);
+  const v = target.clone().sub(from).normalize().multiplyScalar(7 * (1 + 0.2 * diff()));
   orbs.push({ m, v, t: 0, reflected: false });
 }
 const beams = [];
@@ -1136,7 +1136,7 @@ function fireBeam(b) {
   // Damage check: distance from golem to beam segment
   const G = Golem; const gp = new THREE.Vector3(G.pos.x, 0, G.pos.z); const f0 = new THREE.Vector3(from.x, 0, from.z);
   const rel = gp.clone().sub(f0); const proj = clamp(rel.dot(dir), 0, len); const closest = f0.clone().addScaledVector(dir, proj);
-  if (closest.distanceTo(gp) < 1.0) damageGolem(8, dir);
+  if (closest.distanceTo(gp) < 1.0) damageGolem(D.damage(8), dir);
 }
 
 /* =========================================================
@@ -1148,7 +1148,15 @@ const S = {
   best: store.get('best', 0), bestCombo: store.get('bestCombo', 0), bestBlock: store.get('bestBlock', 0), tutDone: store.get('tutDone', false),
   wave: 0, queue: [], spawnT: 0, waveTotal: 0, waveDone: 0, phase: 'idle', phaseT: 0, overT: 0, menuT: 0,
 };
-function Waves_n() { return Math.max(1, S.wave); }
+/* Difficulty: 0 on block 1, rises quickly at first, then levels off toward 1 (about 0.5 by block 5, 0.8 by block 10). */
+function diff() { return 1 - Math.exp(-(Math.max(1, S.wave) - 1) / 6); }
+const D = {
+  speed: () => 1 + 0.3 * diff(),      // bots move up to 30% faster
+  cooldown: () => 1 - 0.3 * diff(),   // and attack up to 30% more often
+  windup: () => 1 - 0.2 * diff(),     // telegraphs shrink, but stay readable
+  damage: (n) => Math.round(n * (1 + 0.25 * diff())),
+  threat: () => 1 + Math.round(diff() * 9),
+};
 const crystals = [];
 const crystalGeo = new THREE.OctahedronGeometry(0.22, 0);
 
@@ -1532,19 +1540,19 @@ function updateBots(dt) {
         b.pos.x += (toG.x * sp + -toG.z * side) * dt; b.pos.z += (toG.z * sp + toG.x * side) * dt;
         if (b.cool <= 0 && dist < 7.5 && S.mode === 'play') { b.state = 'windup'; b.st = 0; b.aim.set(G.pos.x, 0.8, G.pos.z); Snd.beep(); }
       } else if (b.state === 'windup') {
-        const k = b.st / 0.75;
+        const k = b.st / (0.75 * D.windup());
         P.tele.material.opacity = 0.4 + 0.5 * Math.sin(b.st * 30);
         const from = _w; P.eye.getWorldPosition(from);
         const dir = b.aim.clone().sub(from); dir.y = 0; dir.normalize();
         b.aimLine.position.copy(from); b.aimLine.lookAt(from.clone().add(dir)); b.aimLine.scale.set(1, 1, 9); b.aimLine.material.opacity = 0.3 + 0.5 * k;
-        if (b.st > 0.75) { b.aimLine.material.opacity = 0; P.tele.material.opacity = 0; fireBeam(b); b.state = 'move'; b.st = 0; b.cool = rand(2.2, 3.6) - Math.min(1, S.wave * 0.08); }
+        if (b.st > 0.75 * D.windup()) { b.aimLine.material.opacity = 0; P.tele.material.opacity = 0; fireBeam(b); b.state = 'move'; b.st = 0; b.cool = rand(2.2, 3.6) * D.cooldown(); }
       }
     } else if (b.type === 'drone') {
       b.orbitA += dt * 0.35 * (b.t % 20 > 10 ? 1 : -1);
       const tx = G.pos.x + Math.sin(b.orbitA) * 6.5, tz = G.pos.z + Math.cos(b.orbitA) * 6.5;
       b.pos.x = damp(b.pos.x, tx, 1.2, dt); b.pos.z = damp(b.pos.z, tz, 1.2, dt); b.pos.y = damp(b.pos.y, b.hover + Math.sin(b.t * 2) * 0.2, 3, dt);
       if (b.state === 'move' && b.cool <= 0 && S.mode === 'play') { b.state = 'windup'; b.st = 0; Snd.beep(); }
-      if (b.state === 'windup') { P.lens.scale.setScalar(1 + Math.sin(b.st * 30) * 0.3); if (b.st > 0.55) { const from = new THREE.Vector3(); P.eye.getWorldPosition(from); fireOrb(from, G.pos.clone().setY(2.1)); P.lens.scale.setScalar(1); b.state = 'move'; b.cool = rand(3, 4.5); } }
+      if (b.state === 'windup') { P.lens.scale.setScalar(1 + Math.sin(b.st * 30) * 0.3); if (b.st > 0.55) { const from = new THREE.Vector3(); P.eye.getWorldPosition(from); fireOrb(from, G.pos.clone().setY(2.1)); P.lens.scale.setScalar(1); b.state = 'move'; b.cool = rand(3, 4.5) * D.cooldown(); } }
     } else if (b.type === 'brute') {
       if (b.state === 'move') {
         b.pos.x += toG.x * b.speed * dt; b.pos.z += toG.z * b.speed * dt;
@@ -1552,12 +1560,12 @@ function updateBots(dt) {
       } else if (b.state === 'windup') {
         P.tele.material.opacity = 0.4 + 0.5 * Math.sin(b.st * 25); b.dir.lerp(toG, dt * 3).normalize();
         b.aimLine.position.set(b.pos.x, 0.3, b.pos.z); b.aimLine.lookAt(b.pos.x + b.dir.x, 0.3, b.pos.z + b.dir.z); b.aimLine.scale.set(4, 4, 9); b.aimLine.material.opacity = 0.5;
-        if (b.st > 0.85) { b.state = 'dash'; b.st = 0; P.tele.material.opacity = 0; b.aimLine.material.opacity = 0; Snd.whoosh(1.2); }
+        if (b.st > 0.85 * D.windup()) { b.state = 'dash'; b.st = 0; P.tele.material.opacity = 0; b.aimLine.material.opacity = 0; Snd.whoosh(1.2); }
       } else if (b.state === 'dash') {
         b.pos.addScaledVector(b.dir, 11 * dt);
         if (Math.random() < 0.6) Particles.dust(b.pos.x, 0.1, b.pos.z, 1, 0.3, 0.6);
-        if (dist < 1.9) { damageGolem(15, b.dir.clone()); b.state = 'move'; b.cool = 2.5; }
-        if (b.st > 0.9 || Math.hypot(b.pos.x, b.pos.z) > ARENA) { b.state = 'move'; b.st = 0; b.cool = rand(2.2, 3.4); }
+        if (dist < 1.9) { damageGolem(D.damage(15), b.dir.clone()); b.state = 'move'; b.cool = 2.5 * D.cooldown(); }
+        if (b.st > 0.9 || Math.hypot(b.pos.x, b.pos.z) > ARENA) { b.state = 'move'; b.st = 0; b.cool = rand(2.2, 3.4) * D.cooldown(); }
       }
     }
     const rr = Math.hypot(b.pos.x, b.pos.z); if (rr > ARENA + 0.5) { b.pos.x *= (ARENA + 0.5) / rr; b.pos.z *= (ARENA + 0.5) / rr; }
@@ -1604,7 +1612,7 @@ function updateProjectiles(dt) {
     const o = orbs[i]; o.t += dt; o.m.position.addScaledVector(o.v, dt); o.m.scale.setScalar(1 + Math.sin(o.t * 30) * 0.15);
     if (Math.random() < 0.6) Particles.glow(o.m.position.x, o.m.position.y, o.m.position.z, 0.5, o.reflected ? [2, 1.3, 1.8] : [3, 0.4, 0.8], 0.25);
     let done = o.t > 6 || o.m.position.y < 0.1;
-    if (!done && !o.reflected && S.mode === 'play' && o.m.position.distanceTo(_w.set(G.pos.x, 2, G.pos.z)) < 1.1) { damageGolem(7, o.v.clone().setY(0).normalize()); done = true; }
+    if (!done && !o.reflected && S.mode === 'play' && o.m.position.distanceTo(_w.set(G.pos.x, 2, G.pos.z)) < 1.1) { damageGolem(D.damage(7), o.v.clone().setY(0).normalize()); done = true; }
     if (!done && o.reflected) for (const b of bots) { if (b.dead || b.state === 'dying') continue; if (o.m.position.distanceTo(_w.copy(b.pos).setY(b.pos.y + (b.type === 'drone' ? 0 : 0.8))) < 1.1) { damageBot(b, 3, o.v.clone().setY(0).normalize().multiplyScalar(6).setY(6), { big: true }); pow(b.pos.clone().setY(b.pos.y + 1.2), 'Returned', 'hot', 0.9); done = true; break; } }
     if (done) { Particles.spark(o.m.position.x, o.m.position.y, o.m.position.z, 10, [4, 0.8, 1.4], 6); scene.remove(o.m); orbs.splice(i, 1); }
   }
@@ -1627,12 +1635,13 @@ function updateProjectiles(dt) {
    ========================================================= */
 function startWave(n) {
   S.wave = n; S.queue = []; S.waveDone = 0;
-  const peepers = 3 + n * 2, drones = n >= 2 ? n - 1 : 0, brutes = n >= 3 ? Math.floor((n - 1) / 2) : 0;
+  const d = diff();
+  const peepers = 4 + Math.round(6 * d), drones = n >= 2 ? Math.max(1, Math.round(4 * d)) : 0, brutes = n >= 3 ? Math.max(1, Math.round(3 * d)) : 0;
   for (let i = 0; i < peepers; i++) S.queue.push('peeper');
   for (let i = 0; i < drones; i++) S.queue.splice(Math.floor(rand(1, S.queue.length)), 0, 'drone');
   for (let i = 0; i < brutes; i++) S.queue.splice(Math.floor(rand(2, S.queue.length)), 0, 'brute');
   S.waveTotal = S.queue.length; S.phase = 'intro'; S.phaseT = 1.6;
-  banner(`Incoming · ${S.waveTotal} bots`, 'Block ' + pad2(n)); Snd.wave();
+  banner(`Incoming · ${S.waveTotal} bots · threat ${D.threat()}/10`, 'Block ' + pad2(n)); Snd.wave();
   if (n === 1 && !S.tutDone) setTimeout(() => showHint('punch', coarse ? 'Tap <span class="cap">Punch</span> three times for a combo' : 'Press <span class="cap">J</span> three times for a combo', 8), 1800);
   if (n === 2 && !S.tutDone) setTimeout(() => showHint('slam', coarse ? 'Hold <span class="cap">Slam</span>, then let go. Longer hold, bigger quake' : 'Hold <span class="cap">K</span>, then let go. Longer hold, bigger quake', 8), 1800);
   if (n === 3 && !S.tutDone) setTimeout(() => showHint('grab', coarse ? 'Tap <span class="cap">Grab</span> near a bot, then again to throw it' : 'Press <span class="cap">L</span> near a bot, then again to throw it', 8), 1800);
@@ -1642,13 +1651,13 @@ function updateWaves(dt) {
   else if (S.phase === 'fight') {
     S.spawnT -= dt;
     const alive = bots.filter((b) => !b.dead).length;
-    const maxAlive = Math.min(9, 3 + S.wave);
+    const maxAlive = 4 + Math.round(4 * diff());
     if (S.spawnT <= 0 && S.queue.length && alive < maxAlive) {
       const type = S.queue.shift();
       const G = Golem; let x, z, tries = 0;
       do { const a = rand(0, TAU), r = rand(6, ARENA - 1); x = Math.sin(a) * r; z = Math.cos(a) * r; tries++; } while (Math.hypot(x - G.pos.x, z - G.pos.z) < 5.5 && tries < 20);
       spawnBot(type, x, z);
-      S.spawnT = Math.max(0.45, 1.3 - S.wave * 0.08);
+      S.spawnT = 1.3 - 0.5 * diff();
     }
     if (!S.queue.length && !bots.some((b) => !b.dead)) waveClear();
   } else if (S.phase === 'clear') { S.phaseT -= dt; if (S.phaseT <= 0) startWave(S.wave + 1); }

@@ -29,3 +29,7 @@ Open `index.html` in a browser. It is one file: Three.js (r160, loaded from jsDe
 When the golem falls, the game draws a 1200×675 share card (a hero render of the golem flexing, the score, a rank from Pebble to Tectonic Titan, and stats). Players can save it, copy it, or open a prefilled post on X.
 
 Bots drop crystals that heal the golem. Clearing a block heals 25 and starts a tougher one.
+
+## Difficulty
+
+One curve drives everything: `diff = 1 - e^(-(block-1)/6)`. It is 0 on block 1, about 0.5 by block 5 and 0.8 by block 10, and levels off toward 1, so the game gets harder every block but never runs away. At the ceiling bots move 30% faster, attack about 40% more often, telegraph 20% faster and hit 25% harder, with at most 8 on screen. Bot counts per block go 4, 6, 8, 9, 10, 11 … and settle around 17. Each block's banner shows a threat level from 1 to 10.
