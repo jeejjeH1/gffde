@@ -1,0 +1,13 @@
+.oxr-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 34px; padding: 0 10px; margin-left: 4px; border: 0; border-radius: 17px;
+  background: transparent; color: rgb(113, 118, 123); font: 700 13px system-ui, sans-serif; cursor: pointer;
+}
+.oxr-btn:hover { background: rgba(139, 92, 246, .15); color: #8b5cf6; }
+.oxr-btn[disabled] { opacity: .5; cursor: progress; }
+.oxr-toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 2147483647;
+  max-width: 80vw; padding: 10px 16px; border-radius: 10px; color: #fff; background: #111827;
+  font: 14px system-ui, sans-serif; box-shadow: 0 6px 24px rgba(0,0,0,.4);
+}
+.oxr-toast.error { background: #b91c1c; }
