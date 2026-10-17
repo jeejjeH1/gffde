@@ -15,6 +15,11 @@
 <h1>Ollama X Reply</h1>
 <fieldset>
   <legend>Ollama</legend>
+  <label for="apiType">Server type</label>
+  <select id="apiType">
+    <option value="ollama">Ollama (port 11434)</option>
+    <option value="openai">llama.cpp / OpenAI-compatible (e.g. http://localhost:8080)</option>
+  </select>
   <label for="baseUrl">Base URL</label>
   <input id="baseUrl" type="text">
   <label for="model">Model</label>

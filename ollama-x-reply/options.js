@@ -41,6 +41,7 @@
 
   function readOllama() {
     return {
+      apiType: $("apiType").value,
       baseUrl: $("baseUrl").value.trim() || "http://localhost:11434",
       model: $("model").value.trim(),
       temperature: Number($("temperature").value),
@@ -52,7 +53,7 @@
     const { settings: stored } = await chrome.storage.local.get("settings");
     settings = OXR.mergeSettings(stored);
     const o = settings.ollama;
-    $("baseUrl").value = o.baseUrl; $("model").value = o.model;
+    $("apiType").value = o.apiType || "ollama"; $("baseUrl").value = o.baseUrl; $("model").value = o.model;
     $("temperature").value = o.temperature; $("maxTokens").value = o.maxTokens;
     $("autoPost").checked = settings.autoPost;
     renderProfiles();
@@ -84,7 +85,7 @@
 
   $("refresh").addEventListener("click", async () => {
     say("Loading models…");
-    const r = await chrome.runtime.sendMessage({ type: "LIST_MODELS", baseUrl: readOllama().baseUrl });
+    const r = await chrome.runtime.sendMessage({ type: "LIST_MODELS", baseUrl: readOllama().baseUrl, apiType: $("apiType").value });
     if (!r.ok) return say("Could not load models: " + r.error);
     $("models").innerHTML = r.models.map((m) => `<option value="${m.replace(/"/g, "&quot;")}">`).join("");
     say(r.models.length ? `${r.models.length} models found.` : "No models installed. Run: ollama pull llama3.2");

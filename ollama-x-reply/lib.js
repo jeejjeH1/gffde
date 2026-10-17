@@ -2,7 +2,7 @@
   "use strict";
 
   const DEFAULTS = {
-    ollama: { baseUrl: "http://localhost:11434", model: "llama3.2", temperature: 0.6, maxTokens: 120 },
+    ollama: { apiType: "ollama", baseUrl: "http://localhost:11434", model: "llama3.2", temperature: 0.6, maxTokens: 120 },
     activeProfileId: "main",
     autoPost: false,
     profiles: [

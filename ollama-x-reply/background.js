@@ -16,20 +16,20 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 chrome.action.onClicked.addListener(() => chrome.runtime.openOptionsPage());
 
-const base = (u) => String(u || "").replace(/\/+$/, "");
+const base = (u) => String(u || "").replace(/\/+$/, "").replace(/\/v1$/, "");
 
 async function ollamaChat(cfg, prompt, maxTokens) {
+  const openai = cfg.apiType === "openai";
+  const tokens = Number(maxTokens || cfg.maxTokens);
+  const messages = [{ role: "user", content: prompt }];
   let res;
   try {
-    res = await fetch(`${base(cfg.baseUrl)}/api/chat`, {
+    res = await fetch(`${base(cfg.baseUrl)}${openai ? "/v1/chat/completions" : "/api/chat"}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: cfg.model,
-        stream: false,
-        messages: [{ role: "user", content: prompt }],
-        options: { temperature: Number(cfg.temperature), num_predict: Number(maxTokens || cfg.maxTokens) }
-      })
+      body: JSON.stringify(openai
+        ? { model: cfg.model || "local", stream: false, messages, temperature: Number(cfg.temperature), max_tokens: tokens }
+        : { model: cfg.model, stream: false, messages, options: { temperature: Number(cfg.temperature), num_predict: tokens } })
     });
   } catch (_) {
     throw new Error("Cannot reach Ollama at " + cfg.baseUrl + ". On a phone, localhost is the phone itself: use your computer's LAN IP (e.g. http://192.168.1.20:11434) and start Ollama with OLLAMA_HOST=0.0.0.0.");
@@ -37,8 +37,10 @@ async function ollamaChat(cfg, prompt, maxTokens) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (res.status === 403) throw new Error("Ollama rejected the request (403). Set OLLAMA_ORIGINS=chrome-extension://* and restart Ollama.");
-    throw new Error(data.error || `Ollama returned HTTP ${res.status}.`);
+    const detail = data.error && (data.error.message || data.error);
+    throw new Error(detail || `Server returned HTTP ${res.status}.`);
   }
+  if (openai) return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
   return data.message && data.message.content || "";
 }
 
@@ -62,11 +64,12 @@ async function generate(payload) {
   return { text: v.text, autoPost: s.autoPost };
 }
 
-async function listModels(baseUrl) {
-  const res = await fetch(`${base(baseUrl)}/api/tags`);
+async function listModels(baseUrl, apiType) {
+  const openai = apiType === "openai";
+  const res = await fetch(`${base(baseUrl)}${openai ? "/v1/models" : "/api/tags"}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  return (data.models || []).map((m) => m.name);
+  return openai ? (data.data || []).map((m) => m.id) : (data.models || []).map((m) => m.name);
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, respond) => {
@@ -77,7 +80,7 @@ chrome.runtime.onMessage.addListener((msg, sender, respond) => {
       const cfg = Object.assign({}, s.ollama, msg.ollama || {});
       return { text: OXR.sanitizeReply(await ollamaChat(cfg, "Reply with only the word: connected", 12)) };
     }
-    if (msg.type === "LIST_MODELS") return { models: await listModels(msg.baseUrl) };
+    if (msg.type === "LIST_MODELS") return { models: await listModels(msg.baseUrl, msg.apiType) };
     throw new Error("Unknown message");
   };
   run().then((r) => respond({ ok: true, ...r })).catch((e) => respond({ ok: false, error: e.message }));
