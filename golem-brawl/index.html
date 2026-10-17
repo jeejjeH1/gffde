@@ -99,6 +99,15 @@ button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--bone); }
 .stats .big dd { font-family: var(--display); font-weight: 900; font-size: clamp(40px, 9vw, 64px); color: var(--rose); line-height: 1; }
 .badge { align-self: flex-start; font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); background: var(--rose); padding: 5px 9px; }
 .share-text { width: 100%; padding: 10px 12px; font: 13px/1.4 var(--mono); color: var(--bone); background: var(--ink); border: 1px solid var(--line); user-select: text; -webkit-user-select: text; }
+.card.wide { width: min(760px, 100%); max-height: 100%; overflow-y: auto; gap: 16px; }
+.share-card { margin: 0; position: relative; aspect-ratio: 16 / 9; max-width: 100%; background: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.share-card img { display: block; width: 100%; height: 100%; object-fit: cover; user-select: auto; -webkit-user-select: auto; -webkit-touch-callout: default; }
+.share-card .making { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.share-note { margin: 0; font-size: 13px; color: var(--dim); min-height: 1.5em; }
+.btn.x { --bg: var(--bone); --fg: var(--ink); text-decoration: none; }
+.btn.x:hover { --bg: var(--rose); }
+.btn.x svg { width: 16px; height: 16px; fill: currentColor; }
+.split { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-top: 4px; border-top: 1px solid var(--line); }
 .linkbtn { align-self: flex-start; font-size: 13px; color: var(--dim); text-decoration: underline; text-underline-offset: 3px; padding: 4px 0; }
 .linkbtn:hover { color: var(--bone); }
 
@@ -285,23 +294,24 @@ button:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--bone); }
   </section>
 
   <section id="over" class="screen overlay" hidden>
-    <div class="card">
+    <div class="card wide">
       <p id="overEyebrow" class="eyebrow">Block 01 · golem down</p>
       <h2>The golem crumbled</h2>
       <span id="newBest" class="badge" hidden>New best score</span>
-      <dl class="stats">
-        <div class="big"><dt>Score</dt><dd id="oScore">0</dd></div>
-        <div><dt>Bots smashed</dt><dd id="oKills">0</dd></div>
-        <div><dt>Best combo</dt><dd id="oCombo">0</dd></div>
-        <div><dt>Block reached</dt><dd id="oBlock">01</dd></div>
-        <div><dt>Bots bowled</dt><dd id="oBowled">0</dd></div>
-      </dl>
+      <figure class="share-card">
+        <img id="cardImg" alt="" hidden>
+        <div id="cardMaking" class="making">Carving your card</div>
+      </figure>
+      <p id="shareNote" class="share-note">Save the card, then attach it to your post on X.</p>
       <div class="actions">
-        <button id="againBtn" class="btn">Fight again</button>
-        <button id="shareBtn" class="btn ghost">Copy score</button>
+        <a id="postBtn" class="btn x" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.2 2.3h3.4l-7.4 8.4 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9L.8 2.3h7l4.8 6.4zm-1.2 17.9h1.9L7.1 4.2h-2z"/></svg>Post on X</a>
+        <button id="saveBtn" class="btn ghost">Save card</button>
+        <button id="copyImgBtn" class="btn ghost">Copy image</button>
       </div>
-      <input id="shareText" class="share-text" aria-label="Score text to share" readonly hidden>
-      <button id="menuBtn" class="linkbtn">Back to title</button>
+      <div class="split">
+        <button id="againBtn" class="btn">Fight again</button>
+        <button id="menuBtn" class="linkbtn">Back to title</button>
+      </div>
     </div>
   </section>
 </div>
@@ -417,7 +427,8 @@ const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 400);
 
 const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
 const composer = new EffectComposer(renderer, rt);
-composer.addPass(new RenderPass(scene, camera));
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
 const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.6, 0.5, 0.85);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
@@ -1749,12 +1760,137 @@ function gameOver() {
   if (S.wave > S.bestBlock) { S.bestBlock = S.wave; store.set('bestBlock', S.bestBlock); }
   $('newBest').hidden = !isBest || S.score === 0;
 }
+function rankFor(score) {
+  if (score >= 15000) return 'Tectonic Titan';
+  if (score >= 8000) return 'Landslide';
+  if (score >= 4000) return 'Boulder';
+  if (score >= 1500) return 'Cobblestone';
+  return 'Pebble';
+}
+const share = { blob: null, url: '' };
 function showOver() {
-  $('oScore').textContent = fmt(S.score); $('oKills').textContent = fmt(S.kills); $('oCombo').textContent = fmt(S.bestHits);
-  $('oBlock').textContent = pad2(S.wave); $('oBowled').textContent = fmt(S.bowled);
   $('overEyebrow').textContent = `Block ${pad2(S.wave)} · golem down`;
-  $('shareText').hidden = true; $('shareBtn').textContent = 'Copy score';
-  $('hud').hidden = true; $('over').hidden = false; $('againBtn').focus({ preventScroll: true });
+  $('hud').hidden = true; $('over').hidden = false;
+  $('cardImg').hidden = true; $('cardMaking').hidden = false;
+  $('shareNote').textContent = 'Save the card, then attach it to your post on X.';
+  $('postBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText());
+  $('againBtn').focus({ preventScroll: true });
+  share.blob = null;
+  makeCard().then((blob) => {
+    share.blob = blob;
+    if (share.url) URL.revokeObjectURL(share.url);
+    share.url = URL.createObjectURL(blob);
+    const img = $('cardImg'); img.src = share.url; img.hidden = false; $('cardMaking').hidden = true;
+    img.alt = `Golem Brawl score card: ${fmt(S.score)} points, rank ${rankFor(S.score)}`;
+  }).catch(() => { $('cardMaking').textContent = 'The card could not be drawn here'; });
+}
+
+/* Hero shot: pose the golem flexing and render it for the share card */
+function renderHero(w, h) {
+  const G = Golem;
+  const saved = { state: G.state, st: G.st, hurt: G.hurtFlash, alive: G.alive };
+  const hidden = [];
+  for (const b of bots) { if (b.g.visible) { b.g.visible = false; b.parts.shadow.visible = false; hidden.push(b); } }
+  G.setState('flex'); G.st = 0.3; G.hurtFlash = 0; G.alive = true; G.y = 0; G.charge = 0;
+  for (let i = 0; i < 40; i++) applyPose(golemPose(0.05), 0.05);
+  G.glow = 1.5; applyPose(golemPose(0.001), 0.001);
+  const f = G.facing, fx = Math.sin(f), fz = Math.cos(f), sx = Math.cos(f), sz = -Math.sin(f);
+  const cam = new THREE.PerspectiveCamera(34, w / h, 0.1, 400);
+  cam.position.set(G.pos.x + fx * 7.6 + sx * 1.4, 2.5, G.pos.z + fz * 7.6 + sz * 1.4);
+  cam.lookAt(G.pos.x, 2.15, G.pos.z);
+  cam.setViewOffset(w, h, -w * 0.25, 0, w, h); cam.updateProjectionMatrix();
+  keyLight.position.set(G.pos.x + fx * 6 - 4, 12, G.pos.z + fz * 6 + 3); keyLight.target.position.set(G.pos.x, 0, G.pos.z);
+  renderPass.camera = cam;
+  renderer.setPixelRatio(1); renderer.setSize(w, h, false); composer.setPixelRatio(1); composer.setSize(w, h); bloom.setSize(w, h);
+  composer.render(0);
+  const snap = document.createElement('canvas'); snap.width = w; snap.height = h;
+  snap.getContext('2d').drawImage(renderer.domElement, 0, 0, w, h);
+  renderPass.camera = camera;
+  renderer.setPixelRatio(DPR); composer.setPixelRatio(DPR); resize();
+  for (const b of hidden) { b.g.visible = true; b.parts.shadow.visible = true; }
+  G.state = saved.state; G.st = saved.st + 5; G.hurtFlash = saved.hurt; G.alive = saved.alive;
+  return snap;
+}
+async function makeCard() {
+  const CW = 1200, CH = 675;
+  try { await Promise.race([Promise.all(['900 120px Unbounded', '700 36px Unbounded', '600 18px "Geist Mono"', '500 20px Geist'].map((f) => document.fonts.load(f))), new Promise((r) => setTimeout(r, 1500))]); } catch (e) { /* fall back to system faces */ }
+  const hero = renderHero(CW, CH);
+  const c = document.createElement('canvas'); c.width = CW; c.height = CH;
+  const g = c.getContext('2d');
+  const DISPLAY = 'Unbounded, "Arial Black", sans-serif', MONO = '"Geist Mono", ui-monospace, Menlo, monospace';
+  g.drawImage(hero, 0, 0);
+  const lg = g.createLinearGradient(0, 0, CW, 0);
+  lg.addColorStop(0, 'rgba(18,13,16,0.96)'); lg.addColorStop(0.42, 'rgba(18,13,16,0.82)'); lg.addColorStop(0.62, 'rgba(18,13,16,0)');
+  g.fillStyle = lg; g.fillRect(0, 0, CW, CH);
+  const bg = g.createLinearGradient(0, CH * 0.7, 0, CH); bg.addColorStop(0, 'rgba(18,13,16,0)'); bg.addColorStop(1, 'rgba(18,13,16,0.75)');
+  g.fillStyle = bg; g.fillRect(0, 0, CW, CH);
+  // Faceted frame
+  const cut = 26, inset = 18;
+  g.strokeStyle = 'rgba(233,185,206,0.45)'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(inset + cut, inset); g.lineTo(CW - inset, inset); g.lineTo(CW - inset, CH - inset - cut); g.lineTo(CW - inset - cut, CH - inset); g.lineTo(inset, CH - inset); g.lineTo(inset, inset + cut); g.closePath(); g.stroke();
+  const L = 64;
+  g.textBaseline = 'alphabetic'; g.textAlign = 'left';
+  // Eyebrow with the rock mark
+  g.save(); g.translate(L + 8, 78); const ms = 0.055;
+  for (const piece of LOGO) { const a = piece[piece.length - 1]; g.beginPath(); for (let i = 0; i < piece.length - 1; i++) { const x = (piece[i][0] - 200) * ms, y = (piece[i][1] - 200) * ms; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.closePath(); g.fillStyle = `rgba(233,185,206,${0.45 + a * 0.55})`; g.fill(); }
+  g.restore();
+  g.font = `600 17px ${MONO}`; g.fillStyle = '#e9b9ce'; g.fillText('SEISMIC COMMUNITY ARCADE', L + 30, 84);
+  g.font = `900 50px ${DISPLAY}`; g.fillStyle = '#f4edf0'; g.fillText('GOLEM', L, 148); g.fillStyle = '#e9b9ce'; g.fillText('BRAWL', L + g.measureText('GOLEM ').width, 148);
+  // Score
+  g.font = `600 17px ${MONO}`; g.fillStyle = '#a6949d'; g.fillText('SCORE', L, 236);
+  let size = 128; const scoreStr = fmt(S.score);
+  g.font = `900 ${size}px ${DISPLAY}`; while (g.measureText(scoreStr).width > 560 && size > 60) { size -= 6; g.font = `900 ${size}px ${DISPLAY}`; }
+  g.fillStyle = '#523542'; g.fillText(scoreStr, L + 6, 236 + size * 0.95 + 6);
+  g.fillStyle = '#e9b9ce'; g.fillText(scoreStr, L, 236 + size * 0.95);
+  // Rank chip
+  const rank = rankFor(S.score).toUpperCase(); const ry = 236 + size * 0.95 + 30;
+  g.font = `700 22px ${DISPLAY}`; const rw = g.measureText(rank).width + 40, rh = 46, rc = 10;
+  g.fillStyle = '#e9b9ce'; g.beginPath(); g.moveTo(L + rc, ry); g.lineTo(L + rw, ry); g.lineTo(L + rw, ry + rh - rc); g.lineTo(L + rw - rc, ry + rh); g.lineTo(L, ry + rh); g.lineTo(L, ry + rc); g.closePath(); g.fill();
+  g.fillStyle = '#120d10'; g.fillText(rank, L + 20, ry + 32);
+  if (S.score > 0 && S.score >= S.best) { g.font = `600 16px ${MONO}`; g.fillStyle = '#f4edf0'; g.fillText('NEW PERSONAL BEST', L + rw + 18, ry + 29); }
+  // Stats
+  const stats = [['BOTS SMASHED', fmt(S.kills)], ['BEST COMBO', fmt(S.bestHits)], ['BLOCK', pad2(S.wave)], ['BOWLED', fmt(S.bowled)]];
+  const sy = CH - 92, colW = 150;
+  stats.forEach(([label, val], i) => {
+    const x = L + i * colW;
+    if (i) { g.fillStyle = 'rgba(233,185,206,0.25)'; g.fillRect(x - 18, sy - 18, 1, 66); }
+    g.font = `600 13px ${MONO}`; g.fillStyle = '#a6949d'; g.fillText(label, x, sy);
+    g.font = `700 36px ${DISPLAY}`; g.fillStyle = '#f4edf0'; g.fillText(val, x, sy + 44);
+  });
+  g.textAlign = 'right'; g.font = `600 15px ${MONO}`; g.fillStyle = 'rgba(244,237,240,0.7)';
+  g.fillText('#Seismic · fan-made', CW - 48, CH - 44);
+  // Film grain to match the brand photography
+  const id = g.getImageData(0, 0, CW, CH); const d = id.data;
+  for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - 0.5) * 14; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  g.putImageData(id, 0, 0);
+  return await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('toBlob failed'))), 'image/png'));
+}
+const downloadsP = window.claude && typeof window.claude.use === 'function' ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+async function saveCard() {
+  if (!share.blob) return;
+  const filename = `golem-brawl-${Math.round(S.score)}.png`;
+  const note = $('shareNote');
+  if (window.claude && typeof window.claude.use === 'function') {
+    const dl = await downloadsP;
+    if (dl) {
+      try { await dl.save({ filename, data: share.blob }); note.textContent = 'Saved. Now post on X and attach the card.'; }
+      catch (e) { if (e && e.code !== 'declined') note.textContent = 'Saving is not available here. Right-click or long-press the card to save it.'; }
+      return;
+    }
+    note.textContent = 'Saving is not available here. Right-click or long-press the card to save it.';
+    return;
+  }
+  const a = document.createElement('a'); a.href = share.url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+  note.textContent = 'Saved. Now post on X and attach the card.';
+}
+function copyCard() {
+  const note = $('shareNote');
+  if (!share.blob) return;
+  try {
+    navigator.clipboard.write([new ClipboardItem({ 'image/png': share.blob })]).then(
+      () => { note.textContent = 'Copied. Paste it into your post on X.'; $('copyImgBtn').textContent = 'Copied'; },
+      () => { note.textContent = 'This browser cannot copy images. Use Save card instead.'; $('copyImgBtn').hidden = true; });
+  } catch (e) { note.textContent = 'This browser cannot copy images. Use Save card instead.'; $('copyImgBtn').hidden = true; }
 }
 function toMenu() {
   S.mode = 'menu'; clearBots(); Golem.reset(); Golem.setState('idle'); S.menuT = 2;
@@ -1768,7 +1904,7 @@ function pause() {
   $('pause').hidden = false; $('resumeBtn').focus({ preventScroll: true });
 }
 function resume() { if (S.mode !== 'paused') return; S.mode = 'play'; $('pause').hidden = true; Snd.ui(); }
-function shareText() { return `I scored ${fmt(S.score)} in Golem Brawl: ${S.kills} spy bots smashed, a ${S.bestHits}-hit combo, ${S.bowled} bowled over, reached Block ${pad2(S.wave)}. #Seismic`; }
+function shareText() { return `My rock golem hit ${fmt(S.score)} in Golem Brawl and earned the rank ${rankFor(S.score)}: ${S.kills} spy bots smashed, a ${S.bestHits}-hit combo, Block ${pad2(S.wave)}. Can you shake harder? #Seismic`; }
 
 /* =========================================================
    Input
@@ -1838,11 +1974,9 @@ $('pauseBtn').addEventListener('click', pause);
 const muteBtn = $('muteBtn');
 muteBtn.classList.toggle('muted', Snd.muted);
 muteBtn.addEventListener('click', () => { Snd.init(); Snd.setMuted(!Snd.muted); muteBtn.classList.toggle('muted', Snd.muted); });
-$('shareBtn').addEventListener('click', () => {
-  const txt = shareText();
-  const fallback = () => { const i = $('shareText'); i.value = txt; i.hidden = false; i.focus(); i.select(); $('shareBtn').textContent = 'Select and copy'; };
-  try { navigator.clipboard.writeText(txt).then(() => { $('shareBtn').textContent = 'Copied'; }, fallback); } catch (err) { fallback(); }
-});
+$('saveBtn').addEventListener('click', saveCard);
+$('copyImgBtn').addEventListener('click', copyCard);
+$('copyImgBtn').hidden = typeof ClipboardItem === 'undefined' || !navigator.clipboard || !navigator.clipboard.write;
 
 /* =========================================================
    Main loop
@@ -1891,7 +2025,7 @@ Golem.setState('idle');
 renderer.compile(scene, camera);
 const play = $('playBtn'); play.disabled = false; play.innerHTML = 'Start the brawl <span class="key">Enter</span>';
 requestAnimationFrame(frame);
-window.__golem = { S, Golem, bots, spawnBot, newGame, actions, input, startWave, clock };
+window.__golem = { S, Golem, bots, spawnBot, newGame, actions, input, startWave, clock, gameOver, share };
 </script>
 </body>
 </html>

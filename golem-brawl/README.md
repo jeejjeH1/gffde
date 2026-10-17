@@ -26,4 +26,6 @@ Open `index.html` in a browser. It is one file: Three.js (r160, loaded from jsDe
 - **Drone**: circles high and lobs orbs. Punch an orb to send it back.
 - **Brute**: heavy, flashes its visor, then charges. Slam it to stun it.
 
+When the golem falls, the game draws a 1200×675 share card (a hero render of the golem flexing, the score, a rank from Pebble to Tectonic Titan, and stats). Players can save it, copy it, or open a prefilled post on X.
+
 Bots drop crystals that heal the golem. Clearing a block heals 25 and starts a tougher one.
