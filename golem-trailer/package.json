@@ -1,0 +1,7 @@
+{
+  "name": "golem-brawl-trailer",
+  "private": true,
+  "type": "module",
+  "scripts": { "render": "node render.mjs out", "stills": "node stills.mjs out/stills" },
+  "dependencies": { "playwright": "^1.56.1", "three": "0.160.0" }
+}

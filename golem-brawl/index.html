@@ -342,7 +342,9 @@ const store = {
   get(key, d) { try { const v = localStorage.getItem('golembrawl:' + key); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(key, v) { try { localStorage.setItem('golembrawl:' + key, JSON.stringify(v)); } catch (e) { /* storage blocked */ } },
 };
-const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FILM = /[?&]film\b/.test(location.search);
+const film = { cam: null, golemY: null };
+const reduceMotion = !FILM && window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
 
 /* =========================================================
@@ -525,7 +527,7 @@ const env = new THREE.Group(); scene.add(env);
   const geo = new THREE.SphereGeometry(300, 32, 16);
   const mat = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { top: { value: new THREE.Color('#0c0809') }, mid: { value: new THREE.Color('#2b1922') }, hor: { value: new THREE.Color('#9a6a80') } },
+    uniforms: { top: { value: new THREE.Color('#1f121a') }, mid: { value: new THREE.Color('#3a2230') }, hor: { value: new THREE.Color('#a06e86') } },
     vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
     fragmentShader: 'uniform vec3 top; uniform vec3 mid; uniform vec3 hor; varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.12 ? mix(mid, top, smoothstep(0.12, 0.6, h)) : mix(hor, mid, smoothstep(-0.05, 0.12, h)); gl_FragColor = vec4(c, 1.0); }',
   });
@@ -1177,7 +1179,7 @@ function pow(pos3, word, cls = '', size = 1) {
   const x = (_w.x * 0.5 + 0.5) * W, y = (-_w.y * 0.5 + 0.5) * H;
   const el = document.createElement('span'); el.className = 'pow ' + cls; el.textContent = word + '!';
   el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.fontSize = Math.round(clamp(W / 26, 22, 44) * size) + 'px'; el.style.setProperty('--r', rand(-12, 10).toFixed(1) + 'deg');
-  fxRoot.appendChild(el); setTimeout(() => el.remove(), 800);
+  fxRoot.appendChild(el); if (!FILM) setTimeout(() => el.remove(), 800);
   if (fxRoot.childElementCount > 10) fxRoot.firstChild.remove();
 }
 const pick = (a) => a[(Math.random() * a.length) | 0];
@@ -1418,6 +1420,7 @@ function updateGolem(dt) {
       const dur = 0.3; const k = clamp(st / dur, 0, 1);
       G.y = Math.sin(k * Math.PI * 0.5) * (1.2 + G.slamPower * 1.4);
       if (st >= dur) G.setState('slamDown');
+      if (film.golemY !== null) G.y = film.golemY;
       break;
     }
     case 'slamDown': {
@@ -1678,6 +1681,16 @@ function waveClear() {
 const camState = { pos: new THREE.Vector3(0, 6, 14), look: new THREE.Vector3(0, 1.6, 0), orbit: 0.6, blend: 0 };
 function updateCamera(dt, rdt) {
   const G = Golem;
+  if (film.cam) {
+    const c = film.cam;
+    const tr = clock.trauma * clock.trauma;
+    camera.position.set(c.pos[0], c.pos[1], c.pos[2]).add(_w.set(rand(-1, 1) * tr * 0.5, rand(-1, 1) * tr * 0.4, rand(-1, 1) * tr * 0.25));
+    camera.lookAt(c.look[0], c.look[1], c.look[2]);
+    clock.fovKick = damp(clock.fovKick, 0, 5, rdt);
+    camera.fov = (c.fov || 40) - clock.fovKick * 0.6; camera.clearViewOffset(); camera.updateProjectionMatrix();
+    keyLight.position.set(G.pos.x - 6, 14, G.pos.z + 8); keyLight.target.position.set(G.pos.x, 0, G.pos.z);
+    return;
+  }
   const portrait = W / H < 0.9;
   const dist = portrait ? 1.55 : 1;
   const play = new THREE.Vector3(G.pos.x * 0.85, 8.2 * dist, G.pos.z * 0.85 + 11 * dist);
@@ -1992,8 +2005,7 @@ $('copyImgBtn').hidden = typeof ClipboardItem === 'undefined' || !navigator.clip
    ========================================================= */
 let lastT = performance.now();
 let moteT = 0;
-function frame(now) {
-  const rdt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+function step(rdt, draw = true) {
   if (clock.slow > 0) { clock.slow -= rdt; clock.scale = 0.3; } else clock.scale = damp(clock.scale, 1, 6, rdt);
   let dt = rdt * clock.scale;
   if (clock.hitStop > 0) { clock.hitStop -= rdt; dt = 0; }
@@ -2021,8 +2033,12 @@ function frame(now) {
     for (const b of blinkers) b.m.visible = Math.sin(clock.t * 2 + b.ph) > 0.2;
   }
   updateCamera(dt, rdt);
-  composer.render(rdt);
+  if (draw) composer.render(rdt);
   updateHud();
+}
+function frame(now) {
+  const rdt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
+  step(rdt);
   requestAnimationFrame(frame);
 }
 
@@ -2033,8 +2049,11 @@ S.mode = 'menu'; S.menuT = 2.5;
 Golem.setState('idle');
 renderer.compile(scene, camera);
 const play = $('playBtn'); play.disabled = false; play.innerHTML = 'Start the brawl <span class="key">Enter</span>';
-requestAnimationFrame(frame);
 window.__golem = { S, Golem, bots, spawnBot, newGame, actions, input, startWave, clock, gameOver, share };
+// Film mode (?film): no realtime loop; a director script steps the world frame by frame for the trailer.
+if (FILM) {
+  window.__film = { step, film, Snd, THREE, scene, camera, renderer, Particles, Debris, Waves, slamImpact, clearBots, crystals, orbs, fireOrb, damageBot, explodeBot, makeCard, renderHero, rankFor, keyLight, flashLight, pow, ARENA, ready: true };
+} else requestAnimationFrame(frame);
 </script>
 </body>
 </html>
