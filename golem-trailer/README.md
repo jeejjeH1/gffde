@@ -2,7 +2,7 @@
 
 A 42-second 1920×1080 / 30 fps trailer for X, made from real game footage. The game runs in film mode (`../golem-brawl/index.html?film`): no realtime loop, so a director script steps the world one frame at a time, stages each shot with real game objects, moves the camera, and lays kinetic type over the top. The sound is synthesized offline: a 120 BPM score cut to the shots, plus every game sound effect at the exact frame it happened.
 
-Output: `out/golem-brawl-trailer.mp4` (and `out/golem-brawl-trailer-x.mp4`, a smaller copy for posting).
+Output: `video/golem-brawl-trailer.mp4` (master) and `video/golem-brawl-trailer-x.mp4` (smaller copy for posting on X). A fresh render writes to `out/`.
 
 ## Shots
 
